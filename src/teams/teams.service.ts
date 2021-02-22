@@ -1,7 +1,7 @@
 import { Injectable} from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose';
 import { ITeam } from './interfaces/team.interface'
-import { Model, ObjectId } from 'mongoose'
+import { Model, ObjectId, Types } from 'mongoose'
 import { CreateTeamDTO } from './dto/create-team.dto'
 import { UpdateTeamDTO } from './dto/update-team.dto'
 
@@ -25,7 +25,7 @@ export class TeamsService {
   }
 
   async createTeam(createTeamDTO: CreateTeamDTO): Promise<boolean> {
-    await new this.teamModel(createTeamDTO)
+    await new this.teamModel(createTeamDTO).save()
     return true
   }
 
@@ -38,8 +38,26 @@ export class TeamsService {
     return true
   }
 
+  async addPlayers(_id: ObjectId, players: ObjectId[]): Promise<boolean> {
+    const team = await this.teamModel.findById({ _id: _id })
+
+    console.log({
+      p1: players,
+      p2: team.players
+    })
+
+    if (!team) return false
+    if ((players.length + team.players.length) > 5) return false
+    if (this.isDuplicateInArray(players, team.players)) return false
+    
+    await team.updateOne({ $push: { players: { $each: [...players] } } })
+    return true
+  }
+
   async deleteTeam(_id: ObjectId): Promise<boolean> {
     await this.teamModel.findByIdAndDelete({ _id: _id })
     return true
   }
+
+  private isDuplicateInArray = (a1: any[], a2: any[]): boolean => a1.map(x => a2.some(y => y == x)).some(v => v === true)
 }
