@@ -17,7 +17,7 @@ export class UpdateTeamDTO {
   @IsOptional()
   @ArrayMaxSize(5)
   readonly players: ObjectId[]
-  
+
   @IsOptional()
   readonly matches: ObjectId[]
 }

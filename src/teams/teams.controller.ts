@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, HttpStatus, NotFoundException, UseGuards, Res, Param, Body, UseFilters } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, HttpStatus, NotFoundException, UseGuards, Res, Param, Body, UseFilters, ConflictException } from '@nestjs/common'
 import { TeamsService } from './teams.service'
 import { Response } from 'express'
 import { ObjectId } from 'mongoose'
@@ -46,7 +46,8 @@ export class TeamsController {
     @Res() res: Response,
     @Body() createTeamDTO: CreateTeamDTO
   ) {
-    await this.teamsService.createTeam(createTeamDTO)
+    const result = await this.teamsService.createTeam(createTeamDTO)
+    if (!result) throw new ConflictException()
     return res.status(HttpStatus.OK).json({ message: 'Team added' })
   }
 
@@ -60,6 +61,18 @@ export class TeamsController {
     const result = await this.teamsService.updateTeam(_id, updateTeamDTO)
     if (!result) throw new NotFoundException('Team not found')
     return res.status(HttpStatus.OK).json({ message: 'Team updated' })
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Put(':_id/members')
+  async addPlayers(
+    @Res() res: Response,
+    @Body() updateTeamDTO: UpdateTeamDTO,
+    @Param('_id') _id: ObjectId
+  ) {
+    const result = await this.teamsService.addPlayers(_id, updateTeamDTO.players)
+    if (!result) throw new ConflictException('Some conflict')
+    return res.status(HttpStatus.OK).json({ message: 'Players added' })
   }
 
   @UseGuards(JwtAuthGuard)
