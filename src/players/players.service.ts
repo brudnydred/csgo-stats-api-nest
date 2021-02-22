@@ -32,7 +32,7 @@ export class PlayersService {
   }
 
   async getPlayers(): Promise<IPlayer[]> {
-    const players = await this.playerModel.find()
+    const players = await this.playerModel.find().select('-password')
     return players
   }
 
